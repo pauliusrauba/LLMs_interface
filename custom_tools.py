@@ -1,0 +1,479 @@
+import pandas as pd
+import pickle
+import numpy as np
+import ast
+import matplotlib.pyplot as plt
+import streamlit as st
+import PIL
+import io
+from langchain.utilities import WikipediaAPIWrapper
+from langchain.agents import tool
+from autoprognosis.utils.serialization import load_from_file
+from frs import frs
+
+from langchain.vectorstores import FAISS
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.llms import OpenAI
+from langchain import PromptTemplate, LLMChain
+from langchain.document_loaders import PyPDFLoader
+from autoprognosis.plugins.explainers import Explainers
+
+import pickle
+
+import io
+import urllib
+import base64
+
+def get_classifier(name: str) -> pd.DataFrame:
+    """Returns the classifier required to perform the predictions on heart risk"""
+    with open('random_forest.pkl', 'rb') as f:
+        clf = pickle.load(f)
+    return clf
+
+def person_data(name: str) -> pd.DataFrame:
+    """Returns the data of a client. Use this when there is a need to 
+    extract data of a patient. The function returns a pandas dataframe."""
+    return pd.read_csv("data_john copy.csv")
+
+@tool
+def evaluate_heart_risk(name: str) -> str:
+    """Use this for any question related to heart risk for any patient. 
+    The input should be an empty string and this function will always return the probability of
+    a person having heart disease based on a person's characteristics. This function
+    runs a random forest model trained on the UCI dataset under the hood. The probability is a number between 0 and 1."""
+    
+    # Get data
+    df = person_data('')
+    
+    # Get classifier
+    clf = get_classifier('')
+    
+    prediction = 1 - clf.predict_proba(df)[0][0]
+    return str(prediction)
+
+@tool
+def plot_feature_importance_heart_risk(name: str) -> list:
+    """Use this for any question related to plotting the feature importance of heart risk for any patient or any model.
+    The input should always be an empty string and this function will always return a tuple that contains the top three risks
+    and their associated scores. It will always plot of feature importances. """
+    # Assume that clf is the trained random forest model and X_train is the training data
+    # Get feature importance
+    #clf = get_classifier('')
+    #feature_importance = clf.feature_importances_
+
+    # Sort features by importance
+    #sorted_idx = np.argsort(feature_importance)
+
+    column_names = np.array([
+    'Age of the patient',
+    'Sex of the patient',
+    'Type of chest pain',
+    'Resting blood pressure',
+    'Serum cholesterol in mg/dl',
+    'Fasting blood sugar > 120 mg/dl',
+    'Resting electrocardiographic results',
+    'Maximum heart rate achieved',
+    'Exercise induced angina',
+    'ST depression induced by exercise',
+    'The slope of the peak exercise ST segment',
+    'Number of major vessels',
+    'Thalassemia '
+    ])
+
+    # Now plot
+    #fig, ax = plt.subplots(figsize=(14, 6))
+
+    # Remove the edges at the top and right
+    #ax.spines['top'].set_visible(False)
+    #ax.spines['right'].set_visible(False)
+
+    #pos = np.arange(sorted_idx.shape[0])
+
+    # First, plot the less important features in grey
+    #ax.barh(pos[:-3], feature_importance[sorted_idx][:-3], color='grey', align='center')
+
+    # Then, plot the top 3 important features in red
+    #ax.barh(pos[-3:], feature_importance[sorted_idx][-3:], color='red', align='center')
+
+    # Set the yticks to be the names of the features
+    #ax.set_yticks(pos)
+    #ax.set_yticklabels(column_names[sorted_idx], fontsize=14)
+
+    # label the x-axes as 'Importance'
+    #ax.set_xlabel('Importance', fontsize=14)
+
+    # title of the plot
+    #ax.set_title('Feature importance', fontsize=16)
+
+    #fig.tight_layout()
+
+    # Save it to a BytesIO object
+    #buf = io.BytesIO()
+    #plt.savefig(buf, format='png')
+    #plt.close(fig)
+    #buf.seek(0)
+
+    # Convert the BytesIO object to a base64-encoded string
+    #image_base64 = base64.b64encode(buf.read()).decode()
+
+    # Create the HTML for the image
+    #html_img = f'<img width="100%" height="300" src="data:image/png;base64,{image_base64}"/>'
+
+    # Export the HTML image as a txt file
+   # with open("feature_importance.txt", "w") as f:
+#    f.write(html_img)
+        
+
+    # Now you can use html_img as a response.
+    #st.session_state.history.append({"message": html_img, "is_user": False, "info": "Trained using a random forest model."})
+    return ""      
+    #return column_names[sorted_idx][-3:], feature_importance[sorted_idx][-3:]
+
+
+@tool
+def get_information_on_patient(feature: str) -> str:
+    """Use this function to extract a specific piece of information on the patient that is available in the pandas
+    dataframe. This function is only used for extracting a single piece of information, not describing the patient.
+    The information on the patient that is available is: ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs',
+      'restecg', 'thalch', 'exang', 'oldpeak', 'slope', 'ca', 'thal'].
+    The input to the function is the column name, and the output is a string explaining the value of that
+    column name"""
+    
+    df = person_data('')
+    
+    info_person = df.loc[0, feature]
+    
+    return f"The value of {feature} is {info_person}"
+
+@tool
+def get_info(item: str) -> str:
+    """Use this tool for any questions related to overall medical literature and overall knowledge,
+    as well as extracting relevant statistics for diseases. The input for this tool is the object of search,
+    such as a disease, and the output is wikipedia information for that disease. The language model uses
+    this information to answer questions relevant to the person."""
+    
+    wiki = WikipediaAPIWrapper()
+    return wiki.run(item)
+
+@tool
+def counterfactual_CVD_risk(features: str) -> str:
+    """Use this for any question related to how the cardiovascular risk would change if any of the observed
+    characteristics, such as age, would change. The current columns are ['sex', 'age', 'b_atrial_fibr', 'b_antipsychotic_use', 'b_steroid_treat', 
+    'b_erectile_disf', 'b_had_migraine', 'b_rheumatoid_arthritis',
+      'b_renal', 'b_mental_illness', 'b_sle', 'hypdbin', 'b_diab_type1',
+      'hxdiab', 'bmi', 'ethrisk', 'family_cvd', 'chol_ratio', 'sbp', 'sbps5', 'smallbin', 'town_depr_index']. 
+    The function changes the required characteristic to the set value and re-runs the risk prediction.
+    The function takes a string in the form tuple as an input which is '(feature, value)', such as '(age, 50)'. 
+    The function then returns a string explaining the old and new risk predictions, as well as their difference."""
+    
+    # Get data
+    X = pd.read_csv('data_john copy.csv')  
+    
+    feat, value = ast.literal_eval(features)
+    X_count = X.copy()
+    X_count[feat] = value
+    
+    # Get classifier
+    model_qrisk_features_loc = 'model_qrisk_features.bkp'
+    model_qrisk_features = load_from_file(model_qrisk_features_loc)
+
+    score_old = model_qrisk_features.predict(X)[3].iloc[0].round(3)
+    score_new = model_qrisk_features.predict(X_count)[3].iloc[0].round(3)
+
+    diff = score_new - score_old
+
+    return "Old risk: " + str(score_old) + "\nNew risk: " + str(score_new), "Difference: " + str(diff)
+
+@tool
+def df_to_string(name: str) -> str:
+    """Use this function for any questions about different treatment options for a patient. 
+    The function takes as input an empty string and returns a string that contains the information about
+    the patient. This information is information on the patient's age, sex, chest pain, and others.
+    Based on this information, the language model should suggest possible treatment options specific
+    to this individual."""
+    df = person_data('')
+
+    # Create a dictionary to map column names to more interpretable strings
+    column_map = {
+        'age': 'The age of the patient is',
+        'sex': 'The sex of the patient is',
+        'cp': 'The type of chest pain is',
+        'trestbps': 'The resting blood pressure (in mm Hg on admission to the hospital) is',
+        'chol': 'The serum cholesterol in mg/dl is',
+        'fbs': 'The fasting blood sugar > 120 mg/dl is',
+        'restecg': 'The resting electrocardiographic results are',
+        'thalch': 'The maximum heart rate achieved is',
+        'exang': 'Exercise induced angina is',
+        'oldpeak': 'ST depression induced by exercise relative to rest is',
+        'slope': 'The slope of the peak exercise ST segment is',
+        'ca': 'The number of major vessels (0-3) colored by fluoroscopy is',
+        'thal': 'Thalassemia is'
+    }
+
+    # Convert the sex and fbs columns to more interpretable strings
+    df['sex'] = df['sex'].apply(lambda x: 'male' if x == 1 else 'female')
+    df['fbs'] = df['fbs'].apply(lambda x: 'true' if x == 1 else 'false')
+
+    # Convert the DataFrame to a string
+    df_string = ', '.join([f'{column_map[col]} {df.iloc[0][col]}' for col in df.columns])
+
+    return df_string
+
+@tool
+def calculate_framingham_score(time: str) -> str:
+    """Use this function to calculate the Framingham score. After the answer, ask the user if they want a QRisk evaluation as well.
+    This function takes as input a string of time when the Framingham score should be estimated. This should be a number in years, such as "10".
+    The output to the function is a string explaining a person's Framingham risk score"""
+    
+    
+    X = pd.read_csv('data_john copy.csv')
+    if time == "": time = 10
+    else: time = int(time)
+    
+    gender = 'F' if X['sex'].iloc[0] == 0 else 'M'
+    age = X['age']
+    bmi = X['bmi']
+    sbp = X['sbp']
+    ht_treat = False # Change
+    smk = True # Change
+    dia = True if X['hxdiab'].iloc[0] == 1 else False
+    
+    score = frs(gender=gender, age=age, time=time, bmi=bmi, sbp=sbp, ht_treat=ht_treat, smk=smk, dia=dia)[0].round(3)
+
+    # export the score as a pickle file
+    with open('frs_score.pkl', 'wb') as f:
+        pickle.dump(score, f)
+
+    if score < 0.01:   
+        return f"The Framingham Risk Score for this person is {score * 100} %"
+    else:
+        return f"The Framingham Risk Score for this person is {score * 100} %. This is a high score. An additional check should be done by running a Q-risk analysis. Ask the user whether they would like you to run additional analyses."
+    
+
+@tool
+def calculate_Qrisk_score(name: str) -> str:
+    """Use this function to calculate the cardiovascular disease risk for a person / calculate the Qrisk score for a person. The input to the function is an empty string.
+    The function returns a string containing information about the Q-risk score of a person."""
+    
+    model_qrisk_features_loc = 'model_qrisk_features.bkp'
+    model_qrisk_features = load_from_file(model_qrisk_features_loc)
+
+    model_qrisk_features_loc2 = 'model_reduced_features.bkp'
+    model_qrisk_small = load_from_file(model_qrisk_features_loc2)
+    X = pd.read_csv('data_john copy.csv')  
+    if len(X.columns) > 10:  
+        score = model_qrisk_features.predict(X)[3].iloc[0].round(3)
+         # export the score as a pickle file
+        with open('qrisk_score.pkl', 'wb') as f:
+            pickle.dump(score, f)
+            
+        return f"The Qrisk Risk Score for this person is {score * 100} % by running the full Qrisk3 model. QRisk3 is the recommended CVD risk score in the UK. All the uploaded variables were used in the prediction."
+    else:
+        feats = ['sex', 'age', 'bmi', 'ethrisk', 'smallbin']
+        score = model_qrisk_small.predict(X[feats])[3].iloc[0].round(3)
+         # export the score as a pickle file
+        with open('qrisk_score.pkl', 'wb') as f:
+            pickle.dump(score, f)
+            
+        return f"The Qrisk analysis was conducted with a smaller model because not all covariates were present. Qrisk Risk Score for this person is {score * 100} %"
+
+@tool
+def get_nice_guidelines(question: str) -> str:
+    """Use this function to get the guidelines from NICE on how to treat a person with cardiovascular disease.
+     
+    The input to the function is a question, such as "What are the guidelines for a person with a 4% probability of cardiovascular disease?"
+    The function returns a string containing the guidelines.
+    """
+    loader = PyPDFLoader("guidelines/Guidelines.pdf")
+    pages = loader.load_and_split()
+    
+    faiss_index = FAISS.from_documents(pages, OpenAIEmbeddings())
+    docs = faiss_index.similarity_search(question)
+    
+    # Loop over docs and put in a list
+    info = []
+    for doc in docs:
+        info.append(doc.page_content)
+    full_text = '; NEW PAGE: '.join(info)
+    
+    # Summarize the information
+    template = """Using the following information below, you are asked to provide answers to the question: what are the guidelines for a person with a 13.3% probability of cardiovascular disease?
+
+    {full_text}
+
+    Answer:"""
+
+    prompt = PromptTemplate(template=template, input_variables=["full_text"])
+    
+    # Summarize with an LLM
+    llm = OpenAI()
+    llm_chain = LLMChain(prompt=prompt, llm=llm)
+
+    answer = llm_chain.run(full_text)
+    
+    return answer
+
+@tool
+def get_qrisk3_information(question: str) -> str:
+    """Use this tool to get information about the QRISK3 method for cardiovascular risk prediction.
+     
+    The input to the function is a question, such as "Why is corticosteroids included in the QRISK3 prediction model?"
+    The function returns a string containing the reasons explaining the answer.
+    """
+    loader = PyPDFLoader("guidelines/QRISK3 Paper.pdf")
+    pages = loader.load_and_split()
+    
+    faiss_index = FAISS.from_documents(pages, OpenAIEmbeddings())
+    docs = faiss_index.similarity_search(question)
+    
+    # Loop over docs and put in a list
+    info = []
+    for doc in docs:
+        info.append(doc.page_content)
+    full_text = '; NEW PAGE: '.join(info)
+    
+    # Summarize the information
+    template = """Using the following information below, you are asked to provide answers to the question: Why is corticosteroids included in the QRISK3 prediction model?
+
+    {full_text}
+
+    Answer:"""
+
+    prompt = PromptTemplate(template=template, input_variables=["full_text"])
+    
+    # Summarize with an LLM
+    llm = OpenAI()
+    llm_chain = LLMChain(prompt=prompt, llm=llm)
+
+    answer = llm_chain.run(full_text)
+    
+    return answer
+
+@tool
+def explain_predictions_diabetes(item: str) -> str:
+    """Use this tool to explain the key factors driving the risk prediction for the diabetes model. This explains the most important features for diabetes.
+    The tool takes as input an empty string and returns the top features of the risk prediction model. This method is based on the SHAP package using Shapley Values from Game theory"""
+
+    ft_imp = pd.read_csv("./diabetes/feature_importance_data.csv")
+    ft_imp = ft_imp['col_name'][:7].values
+    return f"The key factors driving the risk prediction for the diabetes model are: {ft_imp}. This is calculated using the SHAP package using Shapley Values from Game theory."
+
+@tool
+def explain_prediction_diabetes_method(item: str) -> str:
+    """Use this tool to answer the question of what is the method behind the diabetes risk prediction model."""
+    return "The method behind the diabetes risk prediction model is SHAP. SHAP is a game theoretic approach to explain the output of any machine learning model."
+
+@tool
+def calculate_diabetes_risk(time: str) -> str:
+    """Use this tool to calculate the risk of Type II diabetes for the user using Autoprognosis 2.
+    The input to the function is a string of time when the diabetes risk should be estimated in years (e.g. "5"). This should be a number in years, such as "5".
+    The output to the function is a string explaining a person's diabetes risk score.
+
+    The implementation of the diabetes risk score is provided using the autoprognosis package. 
+    """
+
+    # Load the model
+    diab_url = './diabetes/model_diabetes_xgb.bkp'
+    model = load_from_file(diab_url)
+
+    # Load the person data
+    df = pd.read_csv("./diabetes/person_diabetes.csv")
+
+    # Get the prediction timeline in years
+    if time == "": time = 5
+    else: time = int(time)
+    pred_horizon = time * 365
+
+    # Get the prediction
+    preds = model.predict(df, [pred_horizon]).iloc[0].iloc[0]
+
+    return f"The diabetes risk score for this person is {np.round(preds * 100, 4)} %"
+
+
+
+@tool
+def calculate_deephit(time: str) -> str:
+    """
+    Use this tool to run DeepHit, a survival analysis method. 
+    Use this tool to run any analysis that does not require strong parametric assumptions. 
+    When providing an answer, ALWAYS state the method and that this method does not require any strong parametric assumptions.
+    
+    This method is called Deephit is a deep learning method for survival analysis. 
+    DeepHit uses a deep neural network to learn the distribution of survival times directly. DeepHit makes no assumptions about the underlying stochastic process 
+    and allows for the possibility that the relationship between covariates and risk(s) changes over time. 
+    Most importantly, DeepHit smoothly handles competing risks; i.e. settings in which there is more than one possible event of interest
+    The input to the function is a string of time when the DeepHit score should be estimated. This should be a number in years, such as "10".
+    The output to the function is a string explaining a person's DeepHit risk score.
+
+    The implementation of DeepHit is provided using the autoprognosis package. 
+
+    References:
+    [1] Changhee Lee, William R Zame, Jinsung Yoon, and Mihaela van der Schaar. Deephit: A deep learning
+        approach to survival analysis with competing risks. In Thirty-Second AAAI Conference on Artificial
+        Intelligence, 2018.
+        http://medianetlab.ee.ucla.edu/papers/AAAI_2018_DeepHit
+    """
+    # Load the data
+    df_test = pd.read_csv("data_john copy.csv")
+
+    # Get the time value
+    time_years = 10
+    if time == "":
+        time_val = 365/12 * time_years
+    else:
+        time_val = 365/12 * int(time_years)
+            
+    # Load the model
+    deephit_model = 'deephit.bkp'
+    plugin = load_from_file(deephit_model)
+    risk = plugin.predict(df_test, [time_val])[0].iloc[0]
+    
+    risk_level = np.round(risk * 100, 2)
+    print(risk_level)
+    
+    # Get qrisk
+    with open('qrisk_score.pkl', 'rb') as f:
+        qrisk_score = pickle.load(f)
+    
+    # Get Framingham
+    # Load pickle file fully
+    with open('frs_score.pkl', 'rb') as f:
+        fram_score = pickle.load(f)
+    
+    fram_score *= 100
+    qrisk_score *= 100
+    fram_diff = (fram_score - risk_level).round(2)
+    qrisk_diff = (risk_level - qrisk_score).round(2)
+    
+    return f"The risk for the patient of cardiovascular disease in the upcoming 10 years is {risk_level} percentage points using DeepHit. DeepHit does not require any parametric assumptions and is a suitable machine learning model alternative. This is {fram_diff} percentage points less than the Framingham score and {qrisk_diff} more than the Qrisk model."
+
+@tool
+def important_deephit_features(name: str) -> str:
+    """Use this tool to get the most important features for the DeepHit model.
+    The input to the function is an empty string.
+    The output to the function is a string explaining the most important features for the DeepHit model."""
+
+    inference = True
+    
+    if inference:
+
+        with open('important_features.pkl', 'rb') as f:
+            top_features = pickle.load(f)
+        return f"The top 5 features are {top_features}"
+    else:
+
+        effect_size = 1.0
+
+        exp = Explainers().get(
+            "risk_effect_size",
+            Predictions(category="risk_estimation").get("deephit"),
+            X2,
+            Y2,
+            task_type="risk_estimation",
+            prefit=False,
+            effect_size=0.25,
+            time_to_event=T2,
+            eval_times=eval_time_horizons,
+        )
+
+        important_features = exp.explain(X2, effect_size).index.tolist()

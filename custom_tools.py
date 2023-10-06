@@ -210,17 +210,11 @@ def calculate_Qrisk_score(name: str) -> str:
     X = pd.read_csv('data_john copy.csv')  
     if len(X.columns) > 10:  
         score = model_qrisk_features.predict(X)[3].iloc[0].round(3)
-         # export the score as a pickle file
-        with open('qrisk_score.pkl', 'wb') as f:
-            pickle.dump(score, f)
             
         return f"The Qrisk Risk Score for this person is {score * 100} % by running the full Qrisk3 model. QRisk3 is the recommended CVD risk score in the UK. All the uploaded variables were used in the prediction."
     else:
         feats = ['sex', 'age', 'bmi', 'ethrisk', 'smallbin']
         score = model_qrisk_small.predict(X[feats])[3].iloc[0].round(3)
-         # export the score as a pickle file
-        with open('qrisk_score.pkl', 'wb') as f:
-            pickle.dump(score, f)
             
         return f"The Qrisk analysis was conducted with a smaller model because not all covariates were present. Qrisk Risk Score for this person is {score * 100} %"
 

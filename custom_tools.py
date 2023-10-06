@@ -27,7 +27,7 @@ import base64
 def person_data(name: str) -> pd.DataFrame:
     """Returns the data of a client. Use this when there is a need to 
     extract data of a patient. The function returns a pandas dataframe."""
-    return pd.read_csv("data_john copy.csv")
+    return pd.read_csv("./cvd/person_cvd.csv")
 
 @tool
 def plot_feature_importance_heart_risk(name: str) -> list:
@@ -145,7 +145,7 @@ def counterfactual_CVD_risk(features: str) -> str:
     The function then returns a string explaining the old and new risk predictions, as well as their difference."""
     
     # Get data
-    X = pd.read_csv('data_john copy.csv')  
+    X = pd.read_csv('./cvd/person_cvd.csv')  
     
     feat, value = ast.literal_eval(features)
     X_count = X.copy()
@@ -207,7 +207,7 @@ def calculate_Qrisk_score(name: str) -> str:
 
     model_qrisk_features_loc2 = './cvd/model_reduced_features.bkp'
     model_qrisk_small = load_from_file(model_qrisk_features_loc2)
-    X = pd.read_csv('data_john copy.csv')  
+    X = pd.read_csv('./cvd/person_cvd.csv')  
     if len(X.columns) > 10:  
         score = model_qrisk_features.predict(X)[3].iloc[0].round(3)
             

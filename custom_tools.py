@@ -30,22 +30,6 @@ def person_data(name: str) -> pd.DataFrame:
     return pd.read_csv("data_john copy.csv")
 
 @tool
-def evaluate_heart_risk(name: str) -> str:
-    """Use this for any question related to heart risk for any patient. 
-    The input should be an empty string and this function will always return the probability of
-    a person having heart disease based on a person's characteristics. This function
-    runs a random forest model trained on the UCI dataset under the hood. The probability is a number between 0 and 1."""
-    
-    # Get data
-    df = person_data('')
-    
-    # Get classifier
-    clf = get_classifier('')
-    
-    prediction = 1 - clf.predict_proba(df)[0][0]
-    return str(prediction)
-
-@tool
 def plot_feature_importance_heart_risk(name: str) -> list:
     """Use this for any question related to plotting the feature importance of heart risk for any patient or any model.
     The input should always be an empty string and this function will always return a tuple that contains the top three risks
@@ -212,37 +196,6 @@ def df_to_string(name: str) -> str:
     df_string = ', '.join([f'{column_map[col]} {df.iloc[0][col]}' for col in df.columns])
 
     return df_string
-
-@tool
-def calculate_framingham_score(time: str) -> str:
-    """Use this function to calculate the Framingham score. After the answer, ask the user if they want a QRisk evaluation as well.
-    This function takes as input a string of time when the Framingham score should be estimated. This should be a number in years, such as "10".
-    The output to the function is a string explaining a person's Framingham risk score"""
-    
-    
-    X = pd.read_csv('data_john copy.csv')
-    if time == "": time = 10
-    else: time = int(time)
-    
-    gender = 'F' if X['sex'].iloc[0] == 0 else 'M'
-    age = X['age']
-    bmi = X['bmi']
-    sbp = X['sbp']
-    ht_treat = False # Change
-    smk = True # Change
-    dia = True if X['hxdiab'].iloc[0] == 1 else False
-    
-    score = frs(gender=gender, age=age, time=time, bmi=bmi, sbp=sbp, ht_treat=ht_treat, smk=smk, dia=dia)[0].round(3)
-
-    # export the score as a pickle file
-    with open('frs_score.pkl', 'wb') as f:
-        pickle.dump(score, f)
-
-    if score < 0.01:   
-        return f"The Framingham Risk Score for this person is {score * 100} %"
-    else:
-        return f"The Framingham Risk Score for this person is {score * 100} %. This is a high score. An additional check should be done by running a Q-risk analysis. Ask the user whether they would like you to run additional analyses."
-    
 
 @tool
 def calculate_Qrisk_score(name: str) -> str:

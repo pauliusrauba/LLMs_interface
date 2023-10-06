@@ -14,7 +14,7 @@ from langchain.agents import initialize_agent
 from langchain.agents import AgentType
 
 
-from custom_tools import explain_prediction_diabetes_method, explain_predictions_diabetes, calculate_diabetes_risk, get_nice_guidelines, plot_feature_importance_heart_risk, df_to_string
+from custom_tools import explain_predictions_diabetes, calculate_diabetes_risk, get_nice_guidelines, plot_feature_importance_heart_risk, df_to_string
 
 # Set OpenAI api key
 os.environ['OPENAI_API_KEY'] = apikey
@@ -47,14 +47,9 @@ def create_agent_chain():
     return agent_chain
 
 tool_names = {
-    'calculate_Qrisk_score': 'Calculate QRISK score',
     'get_nice_guidelines': 'Get NICE guidelines',
-    'get_qrisk3_information': 'Get QRISK3 information',
-    'counterfactual_CVD_risk': 'Counterfactual CVD risk',
     'calculate_diabetes_risk': 'Calculate diabetes risk',
     'explain_predictions_diabetes': 'Explain the prediction of diabetes',
-    'explain_prediction_diabetes_method': 'Explanation of diabetes prediction method',
-
 }
 
 def generate_answer():

@@ -306,11 +306,6 @@ def explain_predictions_diabetes(item: str) -> str:
     return f"The key factors driving the risk prediction for the diabetes model are: {ft_imp}. This is calculated using the SHAP package using Shapley Values from Game theory."
 
 @tool
-def explain_prediction_diabetes_method(item: str) -> str:
-    """Use this tool to answer the question of what is the method behind the diabetes risk prediction model."""
-    return "The method behind the diabetes risk prediction model is SHAP. SHAP is a game theoretic approach to explain the output of any machine learning model."
-
-@tool
 def calculate_diabetes_risk(time: str) -> str:
     """Use this tool to calculate the risk of Type II diabetes for the user using Autoprognosis 2.
     The input to the function is a string of time when the diabetes risk should be estimated in years (e.g. "5"). This should be a number in years, such as "5".

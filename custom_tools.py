@@ -152,7 +152,7 @@ def counterfactual_CVD_risk(features: str) -> str:
     X_count[feat] = value
     
     # Get classifier
-    model_qrisk_features_loc = 'model_qrisk_features.bkp'
+    model_qrisk_features_loc = './cvd/model_qrisk_features.bkp'
     model_qrisk_features = load_from_file(model_qrisk_features_loc)
 
     score_old = model_qrisk_features.predict(X)[3].iloc[0].round(3)
@@ -202,10 +202,10 @@ def calculate_Qrisk_score(name: str) -> str:
     """Use this function to calculate the cardiovascular disease risk for a person / calculate the Qrisk score for a person. The input to the function is an empty string.
     The function returns a string containing information about the Q-risk score of a person."""
     
-    model_qrisk_features_loc = 'model_qrisk_features.bkp'
+    model_qrisk_features_loc = './cvd/model_qrisk_features.bkp'
     model_qrisk_features = load_from_file(model_qrisk_features_loc)
 
-    model_qrisk_features_loc2 = 'model_reduced_features.bkp'
+    model_qrisk_features_loc2 = './cvd/model_reduced_features.bkp'
     model_qrisk_small = load_from_file(model_qrisk_features_loc2)
     X = pd.read_csv('data_john copy.csv')  
     if len(X.columns) > 10:  

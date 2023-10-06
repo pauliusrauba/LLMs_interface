@@ -67,7 +67,7 @@ def generate_answer():
     
         if tool_used == 'plot_feature_importance_heart_risk':
             # Import feature importance plot from feature_importance.txt
-            with open('feature_importance.txt', 'r') as f:
+            with open('./cvd/feature_importance.txt', 'r') as f:
                 html_img = f.read()
 
             st.session_state.history.append({"message": html_img, "is_user": False, "info": f"The model used the tool: {tool_used} with the following input: {tool_input}. The description of the tool is: Use this for any question related to plotting the feature importance of heart risk for any patient or any model. The input should always be an empty string and this function will always return a tuple that contains the top three risk and their associated scores. It will always plot of feature importances. "})            

@@ -2,7 +2,7 @@
 
 This repository contains our implementation of [Redefining Digital Health Interfaces with Large Language Models](https://arxiv.org/abs/2310.03560).
 
-We demonstrate how LLMs can use tools, implemented using langchain.
+We illustrate how LLMs can use digital health tools, implemented using langchain.
 
 To get this up and running:
 

@@ -24,12 +24,6 @@ import io
 import urllib
 import base64
 
-def get_classifier(name: str) -> pd.DataFrame:
-    """Returns the classifier required to perform the predictions on heart risk"""
-    with open('random_forest.pkl', 'rb') as f:
-        clf = pickle.load(f)
-    return clf
-
 def person_data(name: str) -> pd.DataFrame:
     """Returns the data of a client. Use this when there is a need to 
     extract data of a patient. The function returns a pandas dataframe."""

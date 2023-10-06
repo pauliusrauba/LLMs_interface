@@ -124,7 +124,7 @@ def get_information_on_patient(feature: str) -> str:
     return f"The value of {feature} is {info_person}"
 
 @tool
-def get_info(item: str) -> str:
+def get_info_from_wkipedia(item: str) -> str:
     """Use this tool for any questions related to overall medical literature and overall knowledge,
     as well as extracting relevant statistics for diseases. The input for this tool is the object of search,
     such as a disease, and the output is wikipedia information for that disease. The language model uses

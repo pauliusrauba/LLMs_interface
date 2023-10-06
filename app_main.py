@@ -15,7 +15,7 @@ from langchain.agents import initialize_agent
 from langchain.agents import AgentType
 
 
-from custom_tools import get_information_on_patient, get_qrisk3_information, get_nice_guidelines, get_info, plot_feature_importance_heart_risk, counterfactual_CVD_risk, df_to_string, calculate_Qrisk_score
+from custom_tools import get_qrisk3_information, get_nice_guidelines, plot_feature_importance_heart_risk, counterfactual_CVD_risk, df_to_string, calculate_Qrisk_score
 
 # Set OpenAI api key
 os.environ['OPENAI_API_KEY'] = apikey

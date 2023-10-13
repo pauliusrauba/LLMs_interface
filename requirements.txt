@@ -51,7 +51,6 @@ fonttools==4.41.0
 formulaic==0.6.4
 fqdn==1.5.1
 frozenlist==1.4.0
-frs @ git+https://github.com/fonnesbeck/framingham_risk.git@ae83f7aaf30575b1e6332659b19e91123fe05ea9
 future==0.18.3
 gitdb==4.0.10
 GitPython==3.1.32

@@ -9,7 +9,7 @@ import io
 from langchain.utilities import WikipediaAPIWrapper
 from langchain.agents import tool
 from autoprognosis.utils.serialization import load_from_file
-from frs import frs
+from QRisk_model import QRisk3Model
 
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -152,11 +152,10 @@ def counterfactual_CVD_risk(features: str) -> str:
     X_count[feat] = value
     
     # Get classifier
-    model_qrisk_features_loc = './cvd/model_qrisk_features.bkp'
-    model_qrisk_features = load_from_file(model_qrisk_features_loc)
+    qrisk_model = QRisk3Model()
 
-    score_old = model_qrisk_features.predict(X)[3].iloc[0].round(3)
-    score_new = model_qrisk_features.predict(X_count)[3].iloc[0].round(3)
+    score_old = qrisk_model.predict(X).values[0][0].round(3)
+    score_new = qrisk_model.predict(X_count).values[0][0].round(3)
 
     diff = score_new - score_old
 
@@ -202,21 +201,11 @@ def calculate_Qrisk_score(name: str) -> str:
     """Use this function to calculate the cardiovascular disease risk for a person / calculate the Qrisk score for a person. The input to the function is an empty string.
     The function returns a string containing information about the Q-risk score of a person."""
     
-    model_qrisk_features_loc = './cvd/model_qrisk_features.bkp'
-    model_qrisk_features = load_from_file(model_qrisk_features_loc)
-
-    model_qrisk_features_loc2 = './cvd/model_reduced_features.bkp'
-    model_qrisk_small = load_from_file(model_qrisk_features_loc2)
+    qrisk_model = QRisk3Model()
     X = pd.read_csv('./cvd/person_cvd.csv')  
-    if len(X.columns) > 10:  
-        score = model_qrisk_features.predict(X)[3].iloc[0].round(3)
+    score = qrisk_model.predict(X).values[0][0].round(3)
             
-        return f"The Qrisk Risk Score for this person is {score * 100} % by running the full Qrisk3 model. QRisk3 is the recommended CVD risk score in the UK. All the uploaded variables were used in the prediction."
-    else:
-        feats = ['sex', 'age', 'bmi', 'ethrisk', 'smallbin']
-        score = model_qrisk_small.predict(X[feats])[3].iloc[0].round(3)
-            
-        return f"The Qrisk analysis was conducted with a smaller model because not all covariates were present. Qrisk Risk Score for this person is {score * 100} %"
+    return f"The Qrisk Risk Score for this person is {score * 100} % by running the full Qrisk3 model. QRisk3 is the recommended CVD risk score in the UK. All the uploaded variables were used in the prediction."
 
 @tool
 def get_nice_guidelines(question: str) -> str:
@@ -309,8 +298,8 @@ def calculate_diabetes_risk(time: str) -> str:
     """
 
     # Load the model
-    diab_url = './diabetes/model_diabetes_xgb.bkp'
-    model = load_from_file(diab_url)
+    diab_model_loc = './diabetes/model_diabetes_xgb.bkp'
+    model = load_from_file(diab_model_loc)
 
     # Load the person data
     df = pd.read_csv("./diabetes/person_diabetes.csv")

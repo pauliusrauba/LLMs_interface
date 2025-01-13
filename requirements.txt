@@ -38,6 +38,7 @@ dataclasses-json==0.5.9
 debugpy==1.6.7
 decorator==5.1.1
 defusedxml==0.7.1
+dill==0.3.8
 et-xmlfile==1.1.0
 exceptiongroup==1.1.2
 executing==1.2.0
@@ -153,8 +154,10 @@ pypandoc==1.11
 pyparsing==3.0.9
 pypdf==3.12.2
 pyppmd==1.0.0
+pytesseract==0.3.10
 python-dateutil==2.8.2
 python-docx==0.8.11
+python-dotenv==1.0.0
 python-json-logger==2.0.7
 python-magic==0.4.27
 python-pptx==0.6.21
@@ -178,7 +181,7 @@ scipy==1.11.1
 seaborn==0.12.2
 Send2Trash==1.8.2
 sgmllib3k==1.0.0
-shap==0.42.1
+shap==0.44.1
 six==1.16.0
 slicer==0.0.7
 smmap==5.0.0
@@ -219,7 +222,7 @@ websocket-client==1.6.1
 widgetsnbextension==4.0.8
 wikipedia==1.4.0
 wrapt==1.15.0
-xgboost==1.7.6
+xgboost==2.0.3
 xgbse==0.2.3
 xlrd==2.0.1
 XlsxWriter==3.1.2

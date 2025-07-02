@@ -69,7 +69,10 @@ Here is the structure of the repository.
 - Synthetic background dataset: The file ```resources/patient_info/background_dataset.csv``` is a synthetically generated dataset used to compute SHAP values for the Autoprognosis2 model. This synthetic data replaces the original dataset, which is private. Substituting this file with the original data (if available) will yield accurate SHAP values.
 - Patient information: The ```resources/patient_info/``` directory contains additional synthetic patient records used in the paper.
 
-### 5. Citation
+### 5. Finding the key questions
+The questions that were used to prompt the language models can be found under ```conversations/LLM_interfaces_questions_answers.csv```. The tools and their respective documentation is equivalent to the docstrings of the given tools in the ```custom_tools.py``` file.
+ 
+### 6. Citation
 
 If you found this repo useful, please consider citing our paper:
 ```

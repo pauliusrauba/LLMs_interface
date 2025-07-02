@@ -74,7 +74,7 @@ The questions that were used to prompt the language models can be found under ``
  
 ### 6. Citation
 
-If you found this repo useful, please consider citing our paper:
+The details on the implementations can be found in the paper. If you found this repo useful, please consider citing our paper:
 ```
 @Article{imrie2023redefining,
     title={Redefining Digital Health Interfaces with Large Language Models}, 

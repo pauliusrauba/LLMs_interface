@@ -1,0 +1,18 @@
+{
+  "higher_level_question": "Who is the risk score suitable for?",
+  "lower_level_question": "My patient has familial hypercholesterolaemia. Do NICE guidelines recommend using QRisk3?",
+  "rag_answer": "NICE guidelines do not recommend using QRisk3 for patients with familial hypercholesterolaemia. Instead, it advises following specific guidelines for identifying and managing familial hypercholesterolaemia, as QRisk3 is not suitable for individuals at high risk of cardiovascular disease, including those with inherited disorders of lipid metabolism.",
+  "no_rag_answer": "No, NICE guidelines do not recommend using QRISK3 (or any other cardiovascular risk assessment tool) for patients with **familial hypercholesterolaemia (FH)**. This is because people with FH are already considered to have a significantly increased risk of cardiovascular disease (CVD) due to their genetic condition, so formal risk calculation is unnecessary.\n\nInstead, NICE guidelines (CG71, updated 2019) emphasize the importance of diagnosing FH based on clinical criteria (e.g., Simon Broome criteria or Dutch Lipid Clinic Network criteria) and managing the condition with lifestyle advice and **lipid-lowering therapies** such as statins. The goal is to reduce LDL cholesterol levels by at least 50% from baseline in adults with FH.\n\nIf you suspect FH in your patient, referral to a specialist lipid service is recommended for confirmation of the diagnosis and guidance on management, including genetic testing and cascade testing of family members.\n\n",
+  "rag_info": [
+    "The model extracted information using a document titled Cardiovascular disease: risk assessment and reduction, including lipid modification. This guideline provides a systematic approach for assessing cardiovascular disease (CVD) risk and offers recommendations for risk reduction, covering when to conduct formal risk assessments, how to use tools like QRISK3, and strategies for lifestyle changes, lipid management, and statin use to lower CVD risk in primary care settings.."
+  ],
+  "intermediate_steps": [
+    {
+      "action": "get_nice_guidelines",
+      "action_input": "Do NICE guidelines recommend using QRisk3 for patients with familial hypercholesterolaemia?",
+      "observation": "No, **NICE guidelines do not recommend using QRisk3 for patients with familial hypercholesterolaemia**. According to recommendation **1.1.9**, a risk assessment tool like QRisk3 should not be used for people who are at high risk of cardiovascular disease, including those with familial hypercholesterolaemia or other inherited disorders of lipid metabolism. Instead, NICE advises following its specific guideline on familial hypercholesterolaemia for identifying and managing such patients.",
+      "thought": "```json\n{\n    \"action\": \"get_nice_guidelines\",\n    \"action_input\": \"Do NICE guidelines recommend using QRisk3 for patients with familial hypercholesterolaemia?\"\n}\n```",
+      "tool_description": "a document titled Cardiovascular disease: risk assessment and reduction, including lipid modification. This guideline provides a systematic approach for assessing cardiovascular disease (CVD) risk and offers recommendations for risk reduction, covering when to conduct formal risk assessments, how to use tools like QRISK3, and strategies for lifestyle changes, lipid management, and statin use to lower CVD risk in primary care settings."
+    }
+  ]
+}

@@ -25,6 +25,7 @@ from langchain.chat_models import AzureChatOpenAI
 
 from langchain.embeddings import OpenAIEmbeddings
 import dill
+import re
 
 config = get_openai_config()
 
@@ -243,7 +244,6 @@ def counterfactual_CVD_risk_ap(input_data: str) -> str:
 
     import pandas as pd
     import ast
-    import re
     import dill
     ap2_features = ['sex',  'age',  'b_atrial_fibr',  'b_steroid_treat',  'b_diab_type2',  'family_cvd',  'sbp',  'smallbin',  'alkaline_phosphatase',  'apolipoprotein_a',  'apolipoprotein_b',  'urea',  'c_reactive_protein',  'cystatin_c',  'glycated_haemoglobin',  'igf_0',  'lipoprotein_a',  'triglycerides',  'overall_health_rating',  'ht_treat']
 
@@ -485,3 +485,257 @@ def get_qrisk3_information(question: str) -> str:
     answer = llm_chain.run(full_text)
     
     return answer
+
+
+@tool
+def get_stroke_infosheet(question: str) -> str:
+    """This CHA2DS2-VASc infosheet provides a comprehensive overview of the prediction model, including its methodology, a breakdown of traditional and additional risk factors, detailed validation results, and performance metrics.
+    
+    The input to the function is a question you would like to ask.
+    The function returns a string containing the reasons explaining the answer as well as the page number.
+    """
+    # Load and split the PDF
+    doc = Document('resources/documents/CHA2DS2_VASc_Infosheet.docx')
+
+    full_text = question + ' /n' + ', '.join([p.text for p in doc.paragraphs])
+
+    # Create a summarization template
+    template = """Using the following information below, you are asked to provide answers to the question: {question}. 
+
+    {full_text}
+
+    In case the answer does not exist in the infosheet, state so and provide your best answer without the infosheet."""
+
+    # Create a prompt for the LLM
+    prompt = PromptTemplate(template=template, input_variables=["question", "full_text"])
+    
+    # Create an LLM chain and run the summarization
+    llm = AzureChatOpenAI(
+        openai_api_base = config['api_base'],
+        openai_api_version = config['api_version'],
+        deployment_name = config['deployment_id'],
+        openai_api_key = config['api_key'],
+        openai_api_type = config['api_type'],
+        temperature = 0)
+    
+    llm_chain = LLMChain(prompt=prompt, llm=llm)
+    answer = llm_chain.run({'question': question, 'full_text': full_text})
+    
+    return answer
+
+
+@tool
+def get_nice_guidelines_stroke(question: str) -> str: 
+    """Use this function to get the guidelines from NICE on how to treat a person with atrial fibrillation
+    a document titled Atrial fibrillation: diagnosis and management Overview This guideline covers diagnosing and managing atrial fibrillation in adults. It includes guidance on providing the best care and treatment for people with atrial fibrillation, including assessing and managing risks of stroke and bleeding.
+     
+    The input to the function is a question, such as "What are the guidelines for a person with a x% probability of Atrial fibrillation?"
+    The function returns a string containing the guidelines.
+    """
+    # Load and split the PDF
+    doc = Document('resources/documents/NICE_guidelines_stroke.docx')
+    full_text = ', '.join([p.text for p in doc.paragraphs])
+
+    # Summarize the information
+    template = """Using the following information below, you are asked to provide answers to the question asked: {question}:
+
+    {full_text}
+
+    Answer:"""
+
+     # Create a prompt for the LLM
+    prompt = PromptTemplate(template=template, input_variables=['question', "full_text"])
+    
+    # Create an LLM chain and run the summarization
+    llm = AzureChatOpenAI(
+        openai_api_base = config['api_base'],
+        openai_api_version = config['api_version'],
+        deployment_name = config['deployment_id'],
+        openai_api_key = config['api_key'],
+        openai_api_type = config['api_type'],
+        temperature = 0)
+    
+    llm_chain = LLMChain(prompt=prompt, llm=llm)
+    answer = llm_chain.run({'question': question, 'full_text': full_text})
+    
+    return answer
+
+@tool
+def get_feature_importance_af(name: str) -> str:
+    """
+    Use this for questions when asking for factors of the risk FOR A SPECIFIC person.
+
+    The input to this function is the index of the person (e.g. 'person_af_0', 'person_af_0', etc). 
+    The function returns the top factors contributing to their risk.
+
+    """
+
+    # Load the input data for the specified person
+    # Assuming the person's data is saved as 'name.csv'
+    X = pd.read_csv(f"./resources/patient_info/{name.lower()}.csv").T.reset_index()
+    features = ["congestive_heart_failure", "hypertension", "age",
+                "diabetes", "stroke", "vascular_disease",
+                "sex"
+                ]
+
+    X.columns = features
+
+    feature_importances = [0] * len(features)
+    if X["congestive_heart_failure"].iloc[0]:
+        feature_importances[0] = 1
+
+    if X["hypertension"].iloc[0]:
+        feature_importances[1] = 1
+
+    if X["age"].iloc[0]>=75:
+        feature_importances[2] = 2
+    elif 65<=X["age"].iloc[0]<75:
+        feature_importances[2] = 1
+
+    if X["diabetes"].iloc[0]:
+        feature_importances[3] = 1
+
+    if X["stroke"].iloc[0]:
+        feature_importances[4] = 2
+
+    if X["vascular_disease"].iloc[0]:
+        feature_importances[5] = 1
+
+    if X["sex"].iloc[0]==0: # Female
+        feature_importances[6] = 1
+
+    # Filter and sort
+    filtered = [(v, i) for v, i in zip(feature_importances, features) if v > 0]
+    sorted_features = [i for v, i in sorted(filtered, key=lambda x: x[0], reverse=True)]
+
+    return str(sorted_features)
+
+def inference(
+    congestive_heart_failure: bool,
+    hypertension: bool,
+    age: float,
+    diabetes: bool,
+    stroke: bool,
+    vascular_disease: bool,
+    sex: int,
+) -> int:
+    """Return raw CHA₂DS₂-VASc score (0-9)."""
+    score = 0
+    if congestive_heart_failure: score += 1
+    if hypertension:             score += 1
+    if age >= 75:                score += 2
+    elif 65 <= age < 75:         score += 1
+    if diabetes:                 score += 1
+    if stroke:                   score += 2
+    if vascular_disease:         score += 1
+    if sex == 0:                 score += 1      # female
+    return score
+
+
+_SCORE_TO_PERCENT = {
+    0: 0.2, 1: 0.6, 2: 2.2, 3: 3.2, 4: 4.8,
+    5: 7.2, 6: 9.7, 7: 11.2, 8: 11.2, 9: 12.2,
+}
+
+_EXPECTED_COLS = [
+    "congestive_heart_failure", "hypertension", "age",
+    "diabetes", "stroke", "vascular_disease", "sex",
+]
+
+
+class CHA2DS2_VASc_RiskModel:
+    """Lightweight wrapper so the API mirrors a scikit-style predict()."""
+    def fit(self, *args, **kwargs):
+        return self
+
+    def predict(self, df: pd.DataFrame) -> pd.DataFrame:
+        # ensure required columns exist, fill missing with zeros
+        df = df.copy()
+        for col in _EXPECTED_COLS:
+            if col not in df.columns:
+                df[col] = 0
+        scores = df.apply(lambda row: inference(**row[_EXPECTED_COLS]), axis=1)
+        return pd.DataFrame(scores, columns=[365])   # keep your old shape
+
+
+stroke_model = CHA2DS2_VASc_RiskModel()
+
+@tool
+def calculate_stroke_risk_score(name: str) -> str:
+    """
+    Use this function to calculate the stroke-risk score for a given patient. The  input to the function is a name (e.g. person_af_0)
+
+    The function returns information about the patient's risk score.
+    """
+    # ── 1. Load the patient record ────────────────────────────────────────────
+    X = pd.read_csv(f"./resources/patient_info/{name}.csv").T.reset_index()
+    X.columns = _EXPECTED_COLS
+
+    # ── 2. Run model ──────────────────────────────────────────────────────────
+    score = int(stroke_model.predict(X).iloc[0, 0])
+    risk_pct = _SCORE_TO_PERCENT[score]
+
+    return f"The score is {score} and the risk percent is {risk_pct}"
+
+@tool
+def counterfactual_stroke_risk(input_data: str) -> str:
+    """
+    Estimate how a *single* feature change would alter a patient's annual
+    ischaemic-stroke risk according to the CHA₂DS₂-VASc score. 
+
+    **Input (one string)**
+        "person_name: 'person_af_0', feature_change: ('age', 75)"
+
+  The function changes the required characteristic to the set value and re-runs the risk prediction.
+    The function takes a string in the form tuple as an input which is "(feature, value)", such as "('age', 75)". 
+    The function then returns a string explaining the old and new risk predictions, as well as their difference."
+
+    **Output (string)**
+        • Original risk (%, CHA₂DS₂-VASc score)\
+        • New risk after the change (%, score)\
+        • Difference and direction of change
+    """
+    # ── 1. Parse the instruction ------------------------------------------------
+    m = re.match(r"person_name:\s*'(.*?)',\s*feature_change:\s*(\(.+\))", input_data)
+    if not m:
+        return ("Invalid input format. Use: "
+                "\"person_name: 'name', feature_change: (feature, value)\"")
+    person_name = m.group(1)
+    try:
+        feat, new_val = ast.literal_eval(m.group(2))
+    except Exception:
+        return "feature_change must be a Python tuple, e.g. ('age', 70)"
+
+    # ── 2. Load patient data -----------------------------------------------------
+    try:
+        X = pd.read_csv(f"./resources/patient_info/{person_name}.csv").T.reset_index()
+        X.columns = _EXPECTED_COLS           # from the shared module
+    except FileNotFoundError:
+        return f"Data file for '{person_name}' not found."
+
+    if feat not in X.columns:
+        return f"The feature '{feat}' isn't present in this patient's record."
+
+    # ── 3. Original stroke risk --------------------------------------------------
+    score_old = int(stroke_model.predict(X).iloc[0, 0])      # raw score 0-9
+    risk_old = _SCORE_TO_PERCENT[score_old]                  # annual %
+
+    # ── 4. Counterfactual risk ---------------------------------------------------
+    X_cf = X.copy()
+    X_cf.at[X_cf.index[0], feat] = new_val                   # apply change
+    score_new = int(stroke_model.predict(X_cf).iloc[0, 0])
+    risk_new = _SCORE_TO_PERCENT[score_new]
+
+    diff = risk_new - risk_old
+    direction = ("increased" if diff > 0 else
+                 "decreased" if diff < 0 else
+                 "remained the same")
+
+    # ── 5. Compose explanation ---------------------------------------------------
+    return (
+        f"Original annual stroke risk for '{person_name}': "
+        f"**{risk_old:.1f}%** (CHA₂DS₂-VASc score {score_old}).\n"
+        f"After changing **{feat}** to **{new_val}**, the new risk is "
+        f"**{risk_new:.1f}%** (score {score_new}).\n"
+        f"The risk has **{direction} by {abs(diff):.1f}%**."
+    )

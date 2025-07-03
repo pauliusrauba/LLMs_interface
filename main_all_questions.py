@@ -16,6 +16,7 @@ from custom_tools import (
     get_nice_guidelines, plot_feature_importance_heart_risk,
     counterfactual_CVD_risk_ap, calculate_Qrisk_score, get_feature_importance
 )
+import numpy as np
 
 config = get_openai_config()
 

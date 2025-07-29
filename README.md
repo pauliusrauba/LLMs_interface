@@ -14,17 +14,18 @@ To use this repository, you will need an API key for querying the LLM. The simpl
 def get_openai_config():
     openai_config = {
         "api_type": "azure",
-        "api_base": api_base,
-        "api_version": api_version,
-        "api_key": api_key_main,
-        "deployment_id": deployment_name,
-        "deployment_id_ada": deployment_name_ada,
+        "api_base": api_base, # URL that specifies the endpoint for the API request
+        "api_version": api_version, # Azure OpenAI REST API version to use
+        "api_key": api_key_main, # Your API key
+        "deployment_id": deployment_name, # Azure deployment name for the model
+        "deployment_id_ada": deployment_name_ada, # Name of text embedding model, e.g.text-embedding-ada-002
         "temperature": 0.0,
         "seed": 0
     }
     return openai_config
 ```
-Replace the placeholders (api_base, api_version, api_key_main, deployment_name, deployment_name_ada) with your actual configuration values. 
+Replace the placeholders (api_base, api_version, api_key_main, deployment_name, deployment_name_ada) with your actual configuration values. This will allow you to query LLMs using our framework via the Azure API.
+
 
 ## Getting started
 
